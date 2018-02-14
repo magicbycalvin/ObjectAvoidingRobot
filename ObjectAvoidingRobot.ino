@@ -14,7 +14,15 @@
 
 //#define DEBUG // Uncomment this for serial debugging
 #define DRIVE // Uncomment this to drive the motors
- 
+
+#ifdef DEBUG
+  #define dbPrint( x ) Serial.print( x )
+  #define dbPrintln( x ) Serial.println( x )
+#else
+  #define dbPrint( x )
+  #define dbPrintln( x )
+#endif
+
 #include <Wire.h>
 #include <Adafruit_MotorShield.h>
 
@@ -22,10 +30,10 @@
 #define DEFAULT_SPEED 150 // Default motor speed [0-255] (DN)
 #define SPEED_OF_SOUND 346 // Speed of sound at room temperature (m/s)
 #define PULSE_TO 11600 // Timeout for the pulseIn function [11600 times out at a USR distance of 2m] (us)
-#define DIST_MAX 400 // Maximum distance the USR can measure, larger values will return a distance of zero (cm)
+#define DIST_MAX 100 // Maximum distance the USR can measure, larger values will return a distance of zero (cm)
 #define DIST_MIN 2 // Minimum distance the USR can measure, smaller values will return a distance of zero (cm)
 #define DIST_THRESH 6 // Any measured distance smaller than this will cause the robot to backup and turn around (cm)
-#define ROT_GAIN 10 // Rotational gain to multiply the difference of the measured distances to determine how aggresive the turn should be
+#define ROT_GAIN 1 // Rotational gain to multiply the difference of the measured distances to determine how aggresive the turn should be
 
 // USR trigger and echo pins
 #define TRIG1 2
@@ -72,7 +80,7 @@ void setup() {
   #ifdef DEBUG
     Serial.begin(9600);
     Serial.println("DEBUG ON");
-    Serial.println("Dist L\tDist F\tDist R\tMotor L\tMotor R");
+    Serial.println("Dist L\tDist F\tDist R");
     Serial.println("---");
   #endif
 
@@ -118,31 +126,36 @@ void loop() {
 
     // Motor driving algorithm
     if ( distL >= DIST_MAX && distF >= DIST_MAX && distR >= DIST_MAX ) {
-      
+
+      dbPrintln("Normal");
       driveMotors( DEFAULT_SPEED, FORWARD, DEFAULT_SPEED, FORWARD );
       
     } else if ( distF < DIST_THRESH ){
-      
+
+      dbPrintln("Front");
       backUp();
       rotateL();
       
     } else if ( distL < DIST_THRESH ) {
-      
+
+       dbPrintln("Left");
        backUp();
        rotateR();
        
     } else if ( distR < DIST_THRESH ) {
-      
+
+      dbPrintln("Right");
       backUp();
       rotateL();
       
-    } else {
-      
+    } /*else {
+
+      dbPrintln("Not Sure");
       driveMotors( DEFAULT_SPEED / 2, FORWARD, DEFAULT_SPEED / 2, FORWARD );
       
-    }
+    }*/
     
-    /*else {
+    else {
       
       if ( distR < distL ) {
         driveMotors( DEFAULT_SPEED, FORWARD, DEFAULT_SPEED + ROT_GAIN*(distL-distR), FORWARD );
@@ -152,7 +165,7 @@ void loop() {
         driveMotors( DEFAULT_SPEED, FORWARD, DEFAULT_SPEED, FORWARD );
       }
       
-    }*/
+    }
 
     // Update the time
     lastTime = curTime;
@@ -160,7 +173,7 @@ void loop() {
     #ifdef DEBUG
       if ( !(debugCount%100) ) {
         Serial.println("---");
-        Serial.println("Dist L\tDist F\tDist R\tMotor L\tMotor R");
+        Serial.println("Dist L\tDist F\tDist R");
         Serial.println("---");
       }
       Serial.print(distL);
