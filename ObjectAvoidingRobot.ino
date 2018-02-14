@@ -12,7 +12,7 @@
  *  
  */
 
-#define DEBUG // Uncomment this for serial debugging
+//#define DEBUG // Uncomment this for serial debugging
 #define DRIVE // Uncomment this to drive the motors
  
 #include <Wire.h>
@@ -24,8 +24,8 @@
 #define PULSE_TO 11600 // Timeout for the pulseIn function [11600 times out at a USR distance of 2m] (us)
 #define DIST_MAX 400 // Maximum distance the USR can measure, larger values will return a distance of zero (cm)
 #define DIST_MIN 2 // Minimum distance the USR can measure, smaller values will return a distance of zero (cm)
-#define DIST_THRESH 3 // Any measured distance smaller than this will cause the robot to backup and turn around (cm)
-#define ROT_GAIN 1 // Rotational gain to multiply the difference of the measured distances to determine how aggresive the turn should be
+#define DIST_THRESH 6 // Any measured distance smaller than this will cause the robot to backup and turn around (cm)
+#define ROT_GAIN 10 // Rotational gain to multiply the difference of the measured distances to determine how aggresive the turn should be
 
 // USR trigger and echo pins
 #define TRIG1 2
@@ -36,10 +36,10 @@
 #define ECHO3 7
 
 // Since we don't have a feedback loop, we may need to tune the motor speeds to each other (offsets are in DN [0-255])
-#define M1_OFFSET 0
-#define M2_OFFSET 0
-#define M3_OFFSET 0
-#define M4_OFFSET 0
+#define M1_OFFSET 13 // Back Left
+#define M2_OFFSET 0 // Back Right
+#define M3_OFFSET 0 // Front Right
+#define M4_OFFSET 13 // Front Left
 
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
@@ -99,8 +99,6 @@ void setup() {
   motor3->run(RELEASE);
   motor4->run(RELEASE);
 
-  driveMotors(100, FORWARD, 100, FORWARD);
-
   // Delay for a second so that we can set the robot down if it was being programmed
   delay(1000);
   
@@ -140,6 +138,12 @@ void loop() {
       
     } else {
       
+      driveMotors( DEFAULT_SPEED / 2, FORWARD, DEFAULT_SPEED / 2, FORWARD );
+      
+    }
+    
+    /*else {
+      
       if ( distR < distL ) {
         driveMotors( DEFAULT_SPEED, FORWARD, DEFAULT_SPEED + ROT_GAIN*(distL-distR), FORWARD );
       } else if ( distR > distL ) {
@@ -148,7 +152,7 @@ void loop() {
         driveMotors( DEFAULT_SPEED, FORWARD, DEFAULT_SPEED, FORWARD );
       }
       
-    }
+    }*/
 
     // Update the time
     lastTime = curTime;
@@ -281,19 +285,19 @@ void driveMotors( uint8_t speedL, uint8_t dirL, uint8_t speedR, uint8_t dirR ) {
 
 void backUp() {
   driveMotors( DEFAULT_SPEED, BACKWARD, DEFAULT_SPEED, BACKWARD );
-  delay(500);
+  delay(1250);
   return;
 }
 
 void rotateR() {
   driveMotors( DEFAULT_SPEED, FORWARD, DEFAULT_SPEED, BACKWARD );
-  delay(250);
+  delay(750);
   return;
 }
 
 void rotateL() {
   driveMotors( DEFAULT_SPEED, BACKWARD, DEFAULT_SPEED, FORWARD );
-  delay(250);
+  delay(750);
   return;
 }
 
